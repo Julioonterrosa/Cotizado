@@ -139,7 +139,6 @@
 
 <script>
 /* ================= BASE DE DATOS DE MATERIALES ================= */
-/* Esta lista solo se edita desde el código de la app. Los vendedores no tienen forma de modificarla desde la interfaz. */
 const MATERIALS = [
   {sku:"SBW530 3.2x50", producto:"Lona con respaldo negro", ancho:3.20, largo:50, valorM2:1.15, tipo:"Rollo"},
   {sku:"SBW530 2.5x50", producto:"Lona con respaldo negro", ancho:2.50, largo:50, valorM2:1.15, tipo:"Rollo"},
@@ -160,12 +159,11 @@ const MATERIALS = [
 ];
 const PRODUCTOS = [...new Set(MATERIALS.map(m=>m.producto))].sort();
 
-/* Margen de utilidad: dato interno, oculto para los vendedores. Para cambiarlo, pide el ajuste en el chat. */
 const MARGEN_PREDETERMINADO = 0.50;
-/* Costo adicional por m² (tinta/insumos): dato interno, oculto para los vendedores. Para cambiarlo, pide el ajuste en el chat. */
+
 const COSTO_ADICIONAL_PREDETERMINADO = 1.80;
 
-/* ================= MOTOR DE CÁLCULO (portado de las fórmulas del Excel) ================= */
+/* ================= MOTOR DE CÁLCULO  ================= */
 function evaluarMaterial(mat, W, H, qty, giroOK, panelOK){
   const E = mat.ancho, F = mat.largo, esRollo = mat.tipo === "Rollo";
   function calcularOrientacion(w, h){
@@ -263,7 +261,7 @@ let state = {
   company: {nombre:"Media Regional", telefono:"", email:""},
 };
 
-/* ================= PERSISTENCIA (window.storage) ================= */
+/* ================= PERSISTENCIA ================= */
 async function cargarAjustes(){
   try{
     const r = await window.storage.get('empresa-config', false);
