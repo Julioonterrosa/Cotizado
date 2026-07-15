@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cotizador de Materiales de Impresión</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2028;
+    --paper:#F1F2ED;
+    --card:#FFFFFF;
+    --line:#D9DAD1;
+    --line-strong:#B8BAAE;
+    --text:#23262B;
+    --text-soft:#5B5E58;
+    --text-faint:#8B8D85;
+    --teal:#1E5C56;
+    --teal-dark:#123B37;
+    --amber:#C97A2B;
+    --amber-bg:#FBEEDD;
+    --danger:#B4402C;
+    --danger-bg:#FBEAE5;
+    --ok:#3C7A3E;
+    --ok-bg:#E9F3E7;
+    --radius:10px;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--text);font-family:var(--font-body);font-size:14px;line-height:1.5;}
+  .app{max-width:1180px;margin:0 auto;padding:0 0 4rem;}
+  .topbar{background:var(--ink);color:#EDEEE8;padding:1.5rem 2rem 0;}
+  .topbar-inner{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;}
+  .brand{display:flex;flex-direction:column;gap:2px;}
+  .brand h1{font-family:var(--font-display);font-weight:600;font-size:22px;margin:0;letter-spacing:.2px;}
+  .brand span{font-size:12px;color:#B7BAAE;font-family:var(--font-mono);}
+  .ruler{height:14px;margin-top:1rem;background:
+    repeating-linear-gradient(90deg,#3A4150 0 1px,transparent 1px 20px),
+    repeating-linear-gradient(90deg,#54596600 0 79px,#3A4150 79px 80px);
+    opacity:.9;}
+  .tabs{display:flex;gap:4px;}
+  .tab{font-family:var(--font-display);font-size:13px;font-weight:600;padding:9px 16px;border-radius:8px 8px 0 0;cursor:pointer;color:#B7BAAE;background:transparent;border:none;}
+  .tab.active{background:var(--paper);color:var(--ink);}
+  .tab:hover:not(.active){color:#fff;}
+  main{padding:2rem;}
+  .grid{display:grid;grid-template-columns:1.1fr 1fr;gap:1.5rem;align-items:start;}
+  @media (max-width:860px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:1.4rem 1.5rem;}
+  .card h2{font-family:var(--font-display);font-size:15px;font-weight:600;margin:0 0 1rem;text-transform:uppercase;letter-spacing:.4px;color:var(--teal-dark);}
+  .field{margin-bottom:.9rem;}
+  .field label{display:block;font-size:12px;color:var(--text-soft);margin-bottom:4px;font-weight:500;}
+  .field input,.field select{width:100%;padding:8px 10px;border:1px solid var(--line-strong);border-radius:7px;font-size:14px;font-family:var(--font-body);background:#fff;color:var(--text);}
+  .field input:focus,.field select:focus{outline:2px solid var(--teal);outline-offset:0;border-color:var(--teal);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;}
+  .checks{display:flex;gap:1.4rem;margin:.6rem 0 1rem;}
+  .check{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-soft);}
+  .check input{width:16px;height:16px;}
+  .btn{font-family:var(--font-display);font-weight:600;font-size:13px;padding:10px 18px;border-radius:8px;border:1px solid var(--teal);background:var(--teal);color:#fff;cursor:pointer;}
+  .btn:hover{background:var(--teal-dark);border-color:var(--teal-dark);}
+  .btn.secondary{background:transparent;color:var(--teal);border-color:var(--teal);}
+  .btn.secondary:hover{background:#EAF1EF;}
+  .btn.ghost{background:transparent;color:var(--text-soft);border-color:var(--line-strong);}
+  .btn.danger{background:transparent;color:var(--danger);border-color:var(--danger);}
+  .btn.danger:hover{background:var(--danger-bg);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btnbar{display:flex;gap:10px;margin-top:.4rem;flex-wrap:wrap;}
+  .result{border-top:2px dashed var(--line-strong);margin-top:1.2rem;padding-top:1.2rem;}
+  .result.empty{color:var(--text-faint);font-style:italic;text-align:center;padding:2rem 0;border-top:none;}
+  .result-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.9rem;}
+  .result-head .sku{font-family:var(--font-mono);font-size:12px;background:var(--amber-bg);color:#7A4A15;padding:3px 8px;border-radius:6px;}
+  .result-head .mat{font-weight:600;font-size:15px;}
+  .price-big{font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--teal-dark);}
+  .price-label{font-size:12px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.4px;}
+  .specs{display:grid;grid-template-columns:1fr 1fr;gap:.5rem 1.2rem;margin:1rem 0;font-size:13px;}
+  .specs div{display:flex;justify-content:space-between;border-bottom:1px solid #EFEFE9;padding:4px 0;}
+  .specs .k{color:var(--text-soft);}
+  .specs .v{font-family:var(--font-mono);font-weight:500;}
+  .warn{background:var(--danger-bg);color:var(--danger);border-radius:7px;padding:10px 12px;font-size:13px;font-weight:500;}
+  .quote-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:.5rem;}
+  .quote-table th{text-align:left;font-family:var(--font-display);font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-soft);border-bottom:1px solid var(--line-strong);padding:6px 8px;}
+  .quote-table td{padding:8px;border-bottom:1px solid #EFEFE9;vertical-align:top;}
+  .quote-table tr:last-child td{border-bottom:none;}
+  .quote-table .num{text-align:right;font-family:var(--font-mono);}
+  .quote-table .del{color:var(--danger);cursor:pointer;background:none;border:none;font-size:16px;line-height:1;padding:0 4px;}
+  .totalbar{display:flex;justify-content:flex-end;gap:2rem;align-items:baseline;margin-top:1rem;padding-top:1rem;border-top:2px solid var(--ink);}
+  .totalbar .lbl{font-size:12px;color:var(--text-soft);text-transform:uppercase;}
+  .totalbar .val{font-family:var(--font-display);font-size:24px;font-weight:700;}
+  .empty-state{text-align:center;color:var(--text-faint);padding:2rem 0;font-style:italic;}
+  .toggle-link{font-size:12px;color:var(--teal);cursor:pointer;text-decoration:underline;}
+  .savedlist{display:flex;flex-direction:column;gap:10px;}
+  .saveditem{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+  .saveditem .meta{font-size:12px;color:var(--text-soft);}
+  .saveditem .name{font-weight:600;font-family:var(--font-display);}
+  .badge{font-family:var(--font-mono);font-size:11px;background:var(--amber-bg);color:#7A4A15;padding:2px 7px;border-radius:5px;}
+  #printArea{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{display:block;position:absolute;top:0;left:0;width:100%;padding:2rem;}
+  }
+  .p-header{display:flex;justify-content:space-between;border-bottom:3px solid var(--ink);padding-bottom:1rem;margin-bottom:1.2rem;}
+  .p-header h1{font-family:var(--font-display);margin:0 0 4px;font-size:20px;}
+  .p-meta{font-size:12px;color:var(--text-soft);text-align:right;}
+  .p-clientbox{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.4rem;font-size:13px;}
+  .p-clientbox div{background:#F6F6F2;padding:.7rem .9rem;border-radius:8px;}
+  .p-clientbox b{display:block;font-size:11px;text-transform:uppercase;color:var(--text-soft);margin-bottom:2px;}
+  .footnote{font-size:11px;color:var(--text-faint);margin-top:2rem;border-top:1px solid var(--line);padding-top:.6rem;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <h1>Cotizador de materiales de impresión</h1>
+        <span id="companyTag">Configura el nombre de tu empresa en Ajustes ↓</span>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="nueva">Nueva cotización</button>
+        <button class="tab" data-tab="historial">Historial</button>
+        <button class="tab" data-tab="ajustes">Ajustes</button>
+      </div>
+    </div>
+    <div class="ruler"></div>
+  </div>
+
+  <main>
+    <div id="view-nueva"></div>
+    <div id="view-historial" style="display:none"></div>
+    <div id="view-ajustes" style="display:none"></div>
+  </main>
+</div>
+
+<div id="printArea"></div>
+
+<script>
+/* ================= BASE DE DATOS DE MATERIALES ================= */
+/* Esta lista solo se edita desde el código de la app. Los vendedores no tienen forma de modificarla desde la interfaz. */
+const MATERIALS = [
+  {sku:"SBW530 3.2x50", producto:"Lona con respaldo negro", ancho:3.20, largo:50, valorM2:1.15, tipo:"Rollo"},
+  {sku:"SBW530 2.5x50", producto:"Lona con respaldo negro", ancho:2.50, largo:50, valorM2:1.15, tipo:"Rollo"},
+  {sku:"SF530 2.5x50",  producto:"Lona sin respaldo negro", ancho:2.50, largo:50, valorM2:1.10, tipo:"Rollo"},
+  {sku:"SAV140 1.37x50",producto:"Vinyl respaldo blanco",   ancho:1.37, largo:50, valorM2:1.55, tipo:"Rollo"},
+  {sku:"SAV140 1.52x50",producto:"Vinyl respaldo blanco",   ancho:1.52, largo:50, valorM2:1.55, tipo:"Rollo"},
+  {sku:"GAV140 1.37x50",producto:"Vinyl respaldo gris",     ancho:1.37, largo:50, valorM2:1.60, tipo:"Rollo"},
+  {sku:"GAV140 1.52x50",producto:"Vinyl respaldo gris",     ancho:1.52, largo:50, valorM2:1.60, tipo:"Rollo"},
+  {sku:"SF530 3.2x50",  producto:"Lona sin respaldo negro", ancho:3.20, largo:50, valorM2:1.10, tipo:"Rollo"},
+  {sku:"MPERF137",      producto:"Microperforado",          ancho:1.37, largo:50, valorM2:2.67, tipo:"Rollo"},
+  {sku:"LAMMAT137",     producto:"Laminador mate",          ancho:1.37, largo:50, valorM2:1.40, tipo:"Rollo"},
+  {sku:"LAMMAT150",     producto:"Laminador mate",          ancho:1.50, largo:50, valorM2:1.48, tipo:"Rollo"},
+  {sku:"BACKLITE 1.37", producto:"Backlite 1.37",           ancho:1.37, largo:50, valorM2:2.86, tipo:"Rollo"},
+  {sku:"BACKLITE 1.50", producto:"Backlite 1.50",           ancho:1.50, largo:50, valorM2:2.86, tipo:"Rollo"},
+  {sku:"SD-PVC03J",     producto:"PVC Foam Board 3mm",      ancho:1.22, largo:2.44, valorM2:3.21, tipo:"Placa"},
+  {sku:"SD-PVC05J",     producto:"PVC Foam Board 5mm",      ancho:1.22, largo:2.44, valorM2:6.04, tipo:"Placa"},
+  {sku:"SD-PVC10J",     producto:"PVC Foam Board 10mm",     ancho:1.22, largo:2.44, valorM2:10.07,tipo:"Placa"},
+];
+const PRODUCTOS = [...new Set(MATERIALS.map(m=>m.producto))].sort();
+
+/* Margen de utilidad: dato interno, oculto para los vendedores. Para cambiarlo, pide el ajuste en el chat. */
+const MARGEN_PREDETERMINADO = 0.40;
+
+/* ================= MOTOR DE CÁLCULO (portado de las fórmulas del Excel) ================= */
+function evaluarMaterial(mat, W, H, qty, giroOK, panelOK){
+  const E = mat.ancho, F = mat.largo, esRollo = mat.tipo === "Rollo";
+  function calcularOrientacion(w, h){
+    if(esRollo){
+      if(w<=E && h<=F){
+        const piezasFila = Math.floor(E/w);
+        const filas = Math.ceil(qty/piezasFila);
+        return {area: E*filas*h, cap: piezasFila, panelizado:false};
+      } else if(panelOK && h<=F){
+        const paneles = Math.ceil(w/E);
+        return {area: E*paneles*h*qty, cap:0, panelizado:true};
+      }
+      return {area: Infinity, cap:0, panelizado:false};
+    } else {
+      if(w<=E && h<=F){
+        const piezasFila = Math.floor(E/w);
+        const filasPlaca = Math.floor(F/h);
+        const cap = piezasFila*filasPlaca;
+        if(cap<=0) return {area:Infinity, cap:0, panelizado:false};
+        const placas = Math.ceil(qty/cap);
+        return {area: placas*E*F, cap, panelizado:false};
+      }
+      return {area:Infinity, cap:0, panelizado:false};
+    }
+  }
+  const normal = calcularOrientacion(W,H);
+  const girada = giroOK ? calcularOrientacion(H,W) : {area:Infinity, cap:0, panelizado:false};
+  const mejorArea = Math.min(normal.area, girada.area);
+  let orientacion, capacidad, esNormal;
+  if(mejorArea>=Infinity){ orientacion="No cabe"; capacidad=0; esNormal=null; }
+  else if(normal.area<=girada.area){
+    esNormal=true;
+    orientacion = (esRollo && W>E) ? "Normal panelizado" : "Normal";
+    capacidad = normal.panelizado ? 0 : normal.cap;
+  } else {
+    esNormal=false;
+    orientacion = (esRollo && H>E) ? "Girado panelizado" : "Girado 90°";
+    capacidad = girada.panelizado ? 0 : girada.cap;
+  }
+  const elegible = mejorArea < Infinity;
+  const desperdicio = elegible ? Math.max(0, mejorArea - W*H*qty) : 0;
+  const costoMaterial = elegible ? mejorArea*mat.valorM2 : 0;
+  let paneles = 0;
+  if(elegible){
+    if(!esRollo) paneles = 1;
+    else paneles = esNormal ? Math.max(1,Math.ceil(W/E)) : Math.max(1,Math.ceil(H/E));
+  }
+  let unidades = 0;
+  if(elegible){
+    if(esRollo){ unidades = Math.ceil((mejorArea/E)/F); }
+    else { unidades = capacidad>0 ? Math.ceil(qty/capacidad) : Math.ceil(mejorArea/(E*F)); }
+  }
+  return {mat, mejorArea, orientacion, capacidad, elegible, desperdicio, costoMaterial, paneles, unidades};
+}
+
+function mejorOpcion(producto, W, H, qty, giroOK, panelOK){
+  const candidatos = MATERIALS.filter(m=>m.producto===producto)
+    .map(m=>evaluarMaterial(m,W,H,qty,giroOK,panelOK))
+    .filter(r=>r.elegible);
+  if(candidatos.length===0) return null;
+  candidatos.sort((a,b)=>a.mejorArea-b.mejorArea);
+  return candidatos[0];
+}
+
+function calcularCotizacionItem({producto,W,H,qty,giroOK,panelOK,costoAdicional,margen}){
+  const opcion = mejorOpcion(producto,W,H,qty,giroOK,panelOK);
+  if(!opcion) return {ok:false};
+  const m2Efectivos = W*H*qty;
+  const m2Consumidos = opcion.mejorArea;
+  const desperdicioM2 = Math.max(0, m2Consumidos - m2Efectivos);
+  const desperdicioPct = m2Consumidos>0 ? desperdicioM2/m2Consumidos : 0;
+  const costoMaterial = opcion.costoMaterial;
+  const costoAdicionalTotal = m2Efectivos*costoAdicional;
+  const costoTotal = costoMaterial+costoAdicionalTotal;
+  const precioVenta = margen>=1 ? 0 : costoTotal/(1-margen);
+  return {
+    ok:true, mat:opcion.mat, orientacion:opcion.orientacion, paneles:opcion.paneles,
+    unidades:opcion.unidades, m2Efectivos, m2Consumidos, desperdicioM2, desperdicioPct,
+    costoMaterial, costoAdicionalTotal, costoTotal, precioVenta,
+    producto, W, H, qty, giroOK, panelOK, costoAdicional, margen
+  };
+}
+
+/* ================= FORMATO ================= */
+const fmt$ = n => "$"+n.toLocaleString("es-SV",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtN = (n,d=2) => n.toLocaleString("es-SV",{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtPct = n => (n*100).toLocaleString("es-SV",{minimumFractionDigits:1,maximumFractionDigits:1})+"%";
+
+/* ================= ESTADO ================= */
+let state = {
+  form: {producto:PRODUCTOS[0], W:1, H:1, qty:1, giroOK:true, panelOK:true, costoAdicional:1.80, desc:""},
+  resultado: null,
+  items: [],
+  cliente: {nombre:"", empresa:"", vendedor:"", validez:"8", notas:""},
+  company: {nombre:"Media Regional", telefono:"", email:""},
+};
+
+/* ================= PERSISTENCIA (window.storage) ================= */
+async function cargarAjustes(){
+  try{
+    const r = await window.storage.get('empresa-config', false);
+    if(r && r.value) state.company = JSON.parse(r.value);
+  }catch(e){}
+  renderCompanyTag();
+}
+async function guardarAjustes(){
+  try{ await window.storage.set('empresa-config', JSON.stringify(state.company), false); }catch(e){}
+  renderCompanyTag();
+}
+function renderCompanyTag(){
+  document.getElementById('companyTag').textContent = state.company.nombre
+    ? state.company.nombre
+    : "Configura el nombre de tu empresa en Ajustes ↓";
+}
+async function listarCotizacionesGuardadas(){
+  try{
+    const r = await window.storage.list('cotizacion:', false);
+    if(!r || !r.keys) return [];
+    const out = [];
+    for(const k of r.keys){
+      try{
+        const v = await window.storage.get(k, false);
+        if(v && v.value) out.push(JSON.parse(v.value));
+      }catch(e){}
+    }
+    out.sort((a,b)=> b.creada - a.creada);
+    return out;
+  }catch(e){ return []; }
+}
+async function guardarCotizacionActual(){
+  if(state.items.length===0){ alert("Agrega al menos un artículo a la cotización antes de guardar."); return; }
+  const id = 'COT-'+Date.now();
+  const payload = {id, creada:Date.now(), cliente:{...state.cliente}, items:state.items, total: totalCotizacion()};
+  try{
+    await window.storage.set('cotizacion:'+id, JSON.stringify(payload), false);
+    alert("Cotización guardada: "+id);
+    renderHistorial();
+  }catch(e){ alert("No se pudo guardar la cotización."); }
+}
+async function eliminarCotizacionGuardada(id){
+  if(!confirm("¿Eliminar esta cotización guardada? Esta acción no se puede deshacer.")) return;
+  try{ await window.storage.delete('cotizacion:'+id, false); }catch(e){}
+  renderHistorial();
+}
+function cargarCotizacionGuardada(payload){
+  state.cliente = payload.cliente;
+  state.items = payload.items;
+  switchTab('nueva');
+}
+
+/* ================= LÓGICA DE FORMULARIO ================= */
+function totalCotizacion(){ return state.items.reduce((s,it)=>s+it.precioVenta,0); }
+
+function calcular(){
+  const f = state.form;
+  if(f.W<=0 || f.H<=0 || f.qty<=0){ state.resultado = {ok:false, error:"Ingresa medidas y cantidad mayores a cero."}; renderNueva(); return; }
+  const r = calcularCotizacionItem({
+    producto:f.producto, W:f.W, H:f.H, qty:f.qty, giroOK:f.giroOK, panelOK:f.panelOK,
+    costoAdicional:f.costoAdicional, margen:MARGEN_PREDETERMINADO
+  });
+  state.resultado = r.ok ? r : {ok:false, error:"No hay material compatible con esas medidas para este producto."};
+  renderNueva();
+}
+
+function agregarItem(){
+  const r = state.resultado;
+  if(!r || !r.ok) return;
+  state.items.push({
+    id:'it'+Date.now(),
+    desc: state.form.desc || r.producto,
+    producto:r.producto, W:r.W, H:r.H, qty:r.qty,
+    sku:r.mat.sku, tipo:r.mat.tipo, orientacion:r.orientacion,
+    m2Efectivos:r.m2Efectivos, m2Consumidos:r.m2Consumidos,
+    costoMaterial:r.costoMaterial, costoAdicionalTotal:r.costoAdicionalTotal,
+    costoTotal:r.costoTotal, precioVenta:r.precioVenta, margen:r.margen
+  });
+  state.form.desc = "";
+  state.resultado = null;
+  renderNueva();
+}
+
+function quitarItem(id){
+  state.items = state.items.filter(it=>it.id!==id);
+  renderNueva();
+}
+
+function nuevaCotizacion(){
+  if(state.items.length>0 && !confirm("¿Empezar una cotización nueva? Se perderán los artículos actuales si no la guardaste.")) return;
+  state.items = [];
+  state.resultado = null;
+  state.cliente = {nombre:"", empresa:"", vendedor:"", validez:"8", notas:""};
+  renderNueva();
+}
+
+/* ================= IMPRESIÓN ================= */
+function imprimirCotizacion(){
+  if(state.items.length===0){ alert("Agrega al menos un artículo antes de generar el documento."); return; }
+  const c = state.cliente, co = state.company;
+  const fecha = new Date().toLocaleDateString("es-SV",{year:'numeric',month:'long',day:'numeric'});
+  const rows = state.items.map((it,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${it.desc}<br><span style="color:#8B8D85;font-size:11px">${fmtN(it.W)} m × ${fmtN(it.H)} m &middot; cant. ${it.qty}</span></td>
+      <td class="num">${fmtN(it.m2Efectivos)} m²</td>
+      <td class="num">${fmt$(it.precioVenta)}</td>
+    </tr>`).join("");
+  document.getElementById('printArea').innerHTML = `
+    <div class="p-header">
+      <div><h1>${co.nombre || "Cotización de impresión"}</h1>
+        <div style="font-size:12px;color:#5B5E58">${co.telefono||""} ${co.telefono&&co.email?"&middot;":""} ${co.email||""}</div>
+      </div>
+      <div class="p-meta">Fecha: ${fecha}<br>Válida por ${c.validez || 8} días<br>Vendedor: ${c.vendedor||"-"}</div>
+    </div>
+    <div class="p-clientbox">
+      <div><b>Cliente</b>${c.nombre || "-"}</div>
+      <div><b>Empresa</b>${c.empresa || "-"}</div>
+    </div>
+    <table class="quote-table">
+      <thead><tr><th>#</th><th>Descripción</th><th style="text-align:right">Área</th><th style="text-align:right">Precio</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="totalbar"><span class="lbl">Total</span><span class="val">${fmt$(totalCotizacion())}</span></div>
+    ${c.notas ? `<div class="footnote"><b>Notas:</b> ${c.notas}</div>` : ""}
+    <div class="footnote">Precios en dólares estadounidenses (USD). Cotización sujeta a confirmación de disponibilidad de material.</div>
+  `;
+  window.print();
+}
+
+/* ================= RENDER: NUEVA COTIZACIÓN ================= */
+function renderNueva(){
+  const f = state.form, r = state.resultado;
+  const el = document.getElementById('view-nueva');
+  el.innerHTML = `
+    <div class="grid">
+      <div class="card">
+        <h2>Datos del arte</h2>
+        <div class="field">
+          <label for="in-producto">Producto</label>
+          <select id="in-producto">${PRODUCTOS.map(p=>`<option value="${p}" ${p===f.producto?'selected':''}>${p}</option>`).join('')}</select>
+        </div>
+        <div class="row3">
+          <div class="field"><label for="in-w">Ancho del arte (m)</label><input id="in-w" type="number" min="0.01" step="0.01" value="${f.W}"></div>
+          <div class="field"><label for="in-h">Alto del arte (m)</label><input id="in-h" type="number" min="0.01" step="0.01" value="${f.H}"></div>
+          <div class="field"><label for="in-qty">Cantidad</label><input id="in-qty" type="number" min="1" step="1" value="${f.qty}"></div>
+        </div>
+        <div class="checks">
+          <label class="check"><input id="in-giro" type="checkbox" ${f.giroOK?'checked':''}> Permitir giro 90°</label>
+          <label class="check"><input id="in-panel" type="checkbox" ${f.panelOK?'checked':''}> Permitir panelización</label>
+        </div>
+        <div class="field"><label for="in-costo">Costo adicional / m² ($)</label><input id="in-costo" type="number" min="0" step="0.01" value="${f.costoAdicional}"></div>
+        <div class="field"><label for="in-desc">Descripción para el cliente (opcional)</label><input id="in-desc" type="text" placeholder="Ej. Banner entrada principal" value="${f.desc}"></div>
+        <div class="btnbar"><button class="btn" id="btn-calcular">Calcular</button></div>
+      </div>
+
+      <div class="card">
+        <h2>Resultado</h2>
+        ${!r ? `<div class="result empty">Completa los datos y presiona Calcular.</div>` :
+          !r.ok ? `<div class="warn">${r.error}</div>` :
+          `<div class="result">
+            <div class="result-head">
+              <div><div class="mat">${r.mat.producto}</div><span class="sku">${r.mat.sku}</span></div>
+              <div style="text-align:right"><div class="price-label">Precio de venta</div><div class="price-big">${fmt$(r.precioVenta)}</div></div>
+            </div>
+            <div class="specs">
+              <div><span class="k">Tipo</span><span class="v">${r.mat.tipo}</span></div>
+              <div><span class="k">Orientación</span><span class="v">${r.orientacion}</span></div>
+              <div><span class="k">m² efectivos</span><span class="v">${fmtN(r.m2Efectivos)}</span></div>
+              <div><span class="k">m² material</span><span class="v">${fmtN(r.m2Consumidos)}</span></div>
+              <div><span class="k">Desperdicio</span><span class="v">${fmtN(r.desperdicioM2)} m² (${fmtPct(r.desperdicioPct)})</span></div>
+              <div><span class="k">${r.mat.tipo==='Rollo'?'Rollos necesarios':'Placas necesarias'}</span><span class="v">${r.unidades}</span></div>
+              <div><span class="k">Costo material</span><span class="v">${fmt$(r.costoMaterial)}</span></div>
+              <div><span class="k">Costo adicional</span><span class="v">${fmt$(r.costoAdicionalTotal)}</span></div>
+              <div><span class="k">Costo total</span><span class="v">${fmt$(r.costoTotal)}</span></div>
+            </div>
+            <div class="btnbar"><button class="btn secondary" id="btn-agregar">Agregar a la cotización</button></div>
+          </div>`
+        }
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem">
+      <h2>Cotización actual</h2>
+      ${state.items.length===0 ? `<div class="empty-state">Aún no hay artículos agregados.</div>` : `
+        <table class="quote-table">
+          <thead><tr><th>#</th><th>Artículo</th><th>Material</th><th class="num">m²</th><th class="num">Precio</th><th></th></tr></thead>
+          <tbody>
+            ${state.items.map((it,i)=>`
+              <tr>
+                <td>${i+1}</td>
+                <td>${it.desc}<br><span style="color:#8B8D85;font-size:11px">${fmtN(it.W)}×${fmtN(it.H)} m &middot; cant. ${it.qty}</span></td>
+                <td><span class="badge">${it.sku}</span></td>
+                <td class="num">${fmtN(it.m2Efectivos)}</td>
+                <td class="num">${fmt$(it.precioVenta)}</td>
+                <td><button class="del" title="Quitar" data-id="${it.id}">✕</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="totalbar"><span class="lbl">Total cotización</span><span class="val">${fmt$(totalCotizacion())}</span></div>
+      `}
+    </div>
+
+    <div class="card" style="margin-top:1.5rem">
+      <h2>Datos del cliente y la cotización</h2>
+      <div class="row2">
+        <div class="field"><label for="cl-nombre">Cliente</label><input id="cl-nombre" type="text" value="${state.cliente.nombre}"></div>
+        <div class="field"><label for="cl-empresa">Empresa del cliente</label><input id="cl-empresa" type="text" value="${state.cliente.empresa}"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="cl-vendedor">Vendedor</label><input id="cl-vendedor" type="text" value="${state.cliente.vendedor}"></div>
+        <div class="field"><label for="cl-validez">Validez (días)</label><input id="cl-validez" type="number" min="1" value="${state.cliente.validez}"></div>
+      </div>
+      <div class="field"><label for="cl-notas">Notas</label><input id="cl-notas" type="text" value="${state.cliente.notas}"></div>
+      <div class="btnbar">
+        <button class="btn" id="btn-imprimir">Generar documento / Imprimir</button>
+        <button class="btn secondary" id="btn-guardar">Guardar cotización</button>
+        <button class="btn ghost" id="btn-nueva">Nueva cotización</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('in-producto').onchange = e=>{f.producto=e.target.value;};
+  document.getElementById('in-w').oninput = e=>{f.W=parseFloat(e.target.value)||0;};
+  document.getElementById('in-h').oninput = e=>{f.H=parseFloat(e.target.value)||0;};
+  document.getElementById('in-qty').oninput = e=>{f.qty=parseInt(e.target.value)||0;};
+  document.getElementById('in-giro').onchange = e=>{f.giroOK=e.target.checked;};
+  document.getElementById('in-panel').onchange = e=>{f.panelOK=e.target.checked;};
+  document.getElementById('in-costo').oninput = e=>{f.costoAdicional=parseFloat(e.target.value)||0;};
+  document.getElementById('in-desc').oninput = e=>{f.desc=e.target.value;};
+  document.getElementById('btn-calcular').onclick = calcular;
+  if(document.getElementById('btn-agregar')) document.getElementById('btn-agregar').onclick = agregarItem;
+  document.querySelectorAll('.del').forEach(b=> b.onclick = ()=>quitarItem(b.dataset.id));
+  document.getElementById('cl-nombre').oninput = e=>{state.cliente.nombre=e.target.value;};
+  document.getElementById('cl-empresa').oninput = e=>{state.cliente.empresa=e.target.value;};
+  document.getElementById('cl-vendedor').oninput = e=>{state.cliente.vendedor=e.target.value;};
+  document.getElementById('cl-validez').oninput = e=>{state.cliente.validez=e.target.value;};
+  document.getElementById('cl-notas').oninput = e=>{state.cliente.notas=e.target.value;};
+  document.getElementById('btn-imprimir').onclick = imprimirCotizacion;
+  document.getElementById('btn-guardar').onclick = guardarCotizacionActual;
+  document.getElementById('btn-nueva').onclick = nuevaCotizacion;
+}
+
+/* ================= RENDER: HISTORIAL ================= */
+async function renderHistorial(){
+  const el = document.getElementById('view-historial');
+  el.innerHTML = `<div class="empty-state">Cargando...</div>`;
+  const lista = await listarCotizacionesGuardadas();
+  if(lista.length===0){ el.innerHTML = `<div class="card"><div class="empty-state">No tienes cotizaciones guardadas todavía.</div></div>`; return; }
+  el.innerHTML = `<div class="savedlist">${lista.map(q=>`
+    <div class="saveditem">
+      <div>
+        <div class="name">${q.cliente.nombre || "Sin nombre de cliente"} ${q.cliente.empresa?`&middot; ${q.cliente.empresa}`:""}</div>
+        <div class="meta">${new Date(q.creada).toLocaleDateString('es-SV',{year:'numeric',month:'short',day:'numeric'})} &middot; ${q.items.length} artículo(s) &middot; ${fmt$(q.total)}</div>
+      </div>
+      <div class="btnbar" style="margin:0">
+        <button class="btn secondary btn-load" data-id="${q.id}">Abrir</button>
+        <button class="btn danger btn-del" data-id="${q.id}">Eliminar</button>
+      </div>
+    </div>`).join('')}</div>`;
+  el.querySelectorAll('.btn-load').forEach(b=>b.onclick=()=>{
+    const q = lista.find(x=>x.id===b.dataset.id);
+    if(q) cargarCotizacionGuardada(q);
+  });
+  el.querySelectorAll('.btn-del').forEach(b=>b.onclick=()=>eliminarCotizacionGuardada(b.dataset.id));
+}
+
+/* ================= RENDER: AJUSTES ================= */
+function renderAjustes(){
+  const el = document.getElementById('view-ajustes');
+  const co = state.company;
+  el.innerHTML = `
+    <div class="card" style="max-width:520px">
+      <h2>Datos de tu empresa</h2>
+      <p style="color:var(--text-soft);font-size:13px;margin-top:-6px">Estos datos aparecen en el encabezado del documento de cotización que se genera al imprimir.</p>
+      <div class="field"><label for="co-nombre">Nombre de la empresa</label><input id="co-nombre" type="text" value="${co.nombre}"></div>
+      <div class="field"><label for="co-telefono">Teléfono</label><input id="co-telefono" type="text" value="${co.telefono}"></div>
+      <div class="field"><label for="co-email">Correo</label><input id="co-email" type="text" value="${co.email}"></div>
+      <div class="btnbar"><button class="btn" id="btn-guardar-ajustes">Guardar</button></div>
+      <p style="color:var(--text-faint);font-size:12px;margin-top:1.5rem;border-top:1px solid var(--line);padding-top:.8rem">
+        El catálogo de materiales y precios está incorporado en esta aplicación y no es editable desde esta pantalla,
+        para que los vendedores no puedan modificarlo. Para actualizar precios o agregar materiales, pide el cambio directamente en el chat.
+      </p>
+    </div>
+  `;
+  document.getElementById('co-nombre').oninput = e=>{co.nombre=e.target.value;};
+  document.getElementById('co-telefono').oninput = e=>{co.telefono=e.target.value;};
+  document.getElementById('co-email').oninput = e=>{co.email=e.target.value;};
+  document.getElementById('btn-guardar-ajustes').onclick = guardarAjustes;
+}
+
+/* ================= NAVEGACIÓN ================= */
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+  document.getElementById('view-nueva').style.display = tab==='nueva' ? 'block':'none';
+  document.getElementById('view-historial').style.display = tab==='historial' ? 'block':'none';
+  document.getElementById('view-ajustes').style.display = tab==='ajustes' ? 'block':'none';
+  if(tab==='historial') renderHistorial();
+  if(tab==='ajustes') renderAjustes();
+}
+document.querySelectorAll('.tab').forEach(t=> t.onclick = ()=>switchTab(t.dataset.tab));
+
+/* ================= INICIO ================= */
+cargarAjustes();
+renderNueva();
+</script>
+</body>
+</html>
