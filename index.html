@@ -139,6 +139,7 @@
 
 <script>
 /* ================= BASE DE DATOS DE MATERIALES ================= */
+/* Esta lista solo se edita desde el código de la app. Los vendedores no tienen forma de modificarla desde la interfaz. */
 const MATERIALS = [
   {sku:"SBW530 3.2x50", producto:"Lona con respaldo negro", ancho:3.20, largo:50, valorM2:1.15, tipo:"Rollo"},
   {sku:"SBW530 2.5x50", producto:"Lona con respaldo negro", ancho:2.50, largo:50, valorM2:1.15, tipo:"Rollo"},
@@ -159,11 +160,12 @@ const MATERIALS = [
 ];
 const PRODUCTOS = [...new Set(MATERIALS.map(m=>m.producto))].sort();
 
-const MARGEN_PREDETERMINADO = 0.50;
-
+/* Margen de utilidad: dato interno, oculto para los vendedores. Para cambiarlo, pide el ajuste en el chat. */
+const MARGEN_PREDETERMINADO = 0.40;
+/* Costo adicional por m² (tinta/insumos): dato interno, oculto para los vendedores. Para cambiarlo, pide el ajuste en el chat. */
 const COSTO_ADICIONAL_PREDETERMINADO = 1.80;
 
-/* ================= MOTOR DE CÁLCULO  ================= */
+/* ================= MOTOR DE CÁLCULO (portado de las fórmulas del Excel) ================= */
 function evaluarMaterial(mat, W, H, qty, giroOK, panelOK){
   const E = mat.ancho, F = mat.largo, esRollo = mat.tipo === "Rollo";
   function calcularOrientacion(w, h){
@@ -261,7 +263,7 @@ let state = {
   company: {nombre:"Media Regional", telefono:"", email:""},
 };
 
-/* ================= PERSISTENCIA ================= */
+/* ================= PERSISTENCIA (window.storage) ================= */
 async function cargarAjustes(){
   try{
     const r = await window.storage.get('empresa-config', false);
@@ -433,8 +435,6 @@ function renderNueva(){
               <div><span class="k">m² material</span><span class="v">${fmtN(r.m2Consumidos)}</span></div>
               <div><span class="k">Desperdicio</span><span class="v">${fmtN(r.desperdicioM2)} m² (${fmtPct(r.desperdicioPct)})</span></div>
               <div><span class="k">${r.mat.tipo==='Rollo'?'Rollos necesarios':'Placas necesarias'}</span><span class="v">${r.unidades}</span></div>
-              <div><span class="k">Costo material</span><span class="v">${fmt$(r.costoMaterial)}</span></div>
-              <div><span class="k">Costo total</span><span class="v">${fmt$(r.costoTotal)}</span></div>
             </div>
             <div class="btnbar"><button class="btn secondary" id="btn-agregar">Agregar a la cotización</button></div>
           </div>`
